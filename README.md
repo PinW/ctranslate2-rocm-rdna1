@@ -117,6 +117,10 @@ copy dist\ctranslate2.dll → site-packages\ctranslate2\
 
 The app also needs `os.add_dll_directory(r"C:\Program Files\AMD\ROCm\6.2\bin")` called before importing CTranslate2, so Windows can find the ROCm DLLs at runtime.
 
+## Known limitations
+
+- **No CPU int8 support.** This build skipped Intel MKL/oneDNN (`WITH_MKL=OFF`, `WITH_DNNL=OFF`) and OpenMP (`OPENMP_RUNTIME=NONE`) since the goal was GPU inference. As a result, `compute_type: int8` fails even on CPU. Use `float32` for CPU fallback, or `float16` for GPU. The app will need to handle this automatically when switching between CPU and GPU modes — TODO.
+
 ## Environment this was built on
 
 - GPU: AMD RX 5700 XT (gfx1010, RDNA 1)
