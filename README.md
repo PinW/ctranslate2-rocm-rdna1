@@ -36,7 +36,8 @@ Extract and replace `rocblas.dll` + `library/` in `C:\Program Files\AMD\ROCm\6.2
 ### MSVC Build Tools
 
 ROCm's clang compiler on Windows delegates linking to MSVC. Install **Build Tools for Visual Studio 2022 or later** with the **"Desktop development with C++"** workload. The components needed:
-- **MSVC Build Tools for x64/x86** — compiler, linker, runtime libs (`msvcrt.lib`, `oldnames.lib`)
+- **MSVC Build Tools for x64/x86 (Latest)** — compiler, linker, runtime libs (`msvcrt.lib`, `oldnames.lib`)
+- **MSVC v143 (VS 2022) toolchain** — also check this in the installer. MSVC 2026 (v14.50) STL headers use `__builtin_verbose_trap` which ROCm's Clang 19.0.0 doesn't support. The build scripts work around this, but having v143 installed is a safety net.
 - **Windows SDK** — system headers and libs
 
 ### Other tools
