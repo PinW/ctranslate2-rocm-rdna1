@@ -120,6 +120,9 @@ The app also needs `os.add_dll_directory(r"C:\Program Files\AMD\ROCm\6.2\bin")` 
 ## Known limitations
 
 - **No CPU int8 support.** This build skipped Intel MKL/oneDNN (`WITH_MKL=OFF`, `WITH_DNNL=OFF`) and OpenMP (`OPENMP_RUNTIME=NONE`) since the goal was GPU inference. As a result, `compute_type: int8` fails even on CPU. Use `float32` for CPU fallback, or `float16` for GPU. The app will need to handle this automatically when switching between CPU and GPU modes — TODO.
+- **float16 fails with `cuBLAS UNKNOWN` error.** Only `float32` works on GPU. Likely a Tensile kernel coverage gap for float16 GEMM shapes on gfx1010. TODO: investigate if community rocBLAS has float16 kernels or if this is a hardware limitation.
+- **Empty transcriptions on GPU.** Model loads and runs without errors but returns empty text. Works with `beam_size=1, language="en"` (test script) but fails with `beam_size=5, language=auto` (app defaults). Under investigation — likely a precision issue with beam search on fallback Tensile kernels.
+- **Process hangs on shutdown in GPU mode.** After `Ctrl+C`, the app prints "Goodbye" but hangs indefinitely. The process must be killed manually. The HIP runtime or rocBLAS may not be releasing GPU resources cleanly. Does not happen in CPU mode.
 
 ## Environment this was built on
 
