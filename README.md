@@ -17,6 +17,37 @@ This repo contains the patched CTranslate2 source (3 files changed), build scrip
 
 RX 5700 XT, RX 5700, RX 5600 XT, RX 5500 XT — all use the gfx1010 architecture and should work with this build. Only tested on RX 5700 XT.
 
+## Prerequisites
+
+### HIP SDK 6.2
+
+Install **HIP SDK 6.2.x** (NOT 7.x). The Adrenalin gaming driver ships ROCm 6 runtime DLLs, so the SDK version must match. HIP SDK 7 will see zero devices on RDNA 1.
+
+During installation, select the **full install** — you need both:
+- **HIP Runtime** — `amdhip64.dll`, device management, kernel launch
+- **HIP Runtime Compiler** — includes `amd_comgr.dll` (Code Object Manager), required for GPU initialization. Without it you get a misleading "no ROCm-capable device" error even though the GPU is present.
+
+### Community rocBLAS with gfx1010 Tensile kernels
+
+The stock rocBLAS in HIP SDK 6.2 has no gfx1010 kernels. Download community-built ones from [likelovewant/ROCmLibs](https://github.com/likelovewant/ROCmLibs-for-gfx1103-AMD780M-APU/releases/tag/v0.6.2.4) (v0.6.2.4). A copy of the archive is included in `community-rocblas-gfx1010/`.
+
+Extract and replace `rocblas.dll` + `library/` in `C:\Program Files\AMD\ROCm\6.2\bin\rocblas\`.
+
+### MSVC Build Tools
+
+ROCm's clang compiler on Windows delegates linking to MSVC. Install **Build Tools for Visual Studio 2022 or later** with the **"Desktop development with C++"** workload. The components needed:
+- **MSVC Build Tools for x64/x86** — compiler, linker, runtime libs (`msvcrt.lib`, `oldnames.lib`)
+- **Windows SDK** — system headers and libs
+
+### Other tools
+
+| Tool | Version used | Install |
+|------|-------------|---------|
+| CMake | 4.2+ | `pip install cmake` |
+| Ninja | 1.13+ | `pip install ninja` |
+| Python | 3.13 | Target runtime for the wheel |
+| pybind11 | 3.0+ | `pip install pybind11` (installed by build script) |
+
 ## What this folder contains
 
 ### Build Scripts (root)
