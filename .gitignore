@@ -1,0 +1,8 @@
+# CTranslate2 build artifacts (regeneratable via build scripts)
+CTranslate2/build/
+CTranslate2/python/build/
+CTranslate2/python/dist/
+CTranslate2/python/*.egg-info/
+
+# CTranslate2 submodules (fetched by git clone --recurse-submodules)
+CTranslate2/third_party/

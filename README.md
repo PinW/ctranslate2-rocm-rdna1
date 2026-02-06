@@ -1,0 +1,82 @@
+# CTranslate2 ROCm Build for RX 5700 XT (gfx1010)
+
+Custom CTranslate2 v4.7.1 built from source with ROCm 6.2 on Windows, targeting gfx1010.
+GPU transcription verified working — February 2026.
+
+## What this folder contains
+
+### Build Scripts (root)
+
+| File | Purpose |
+|------|---------|
+| `configure.bat` | CMake configure step. Sets up MSVC + ROCm environment, then runs cmake with all the flags needed for a ROCm 6.2 / gfx1010 build. Deletes previous build dir first. |
+| `build.bat` | Compile step. Sets up environment, then runs `cmake --build` with parallel jobs. Takes 10-30 min. |
+| `install_and_wheel.bat` | Package step. Installs the built C++ library, then builds a Python `.whl` file from the `python/` subdirectory. |
+
+Run in order: `configure.bat` then `build.bat` then `install_and_wheel.bat`.
+
+### `dist/` — Build output (ready to install)
+
+| File | What |
+|------|------|
+| `ctranslate2-4.7.1-cp313-cp313-win_amd64.whl` | Python wheel — `pip install --force-reinstall <this>` |
+| `ctranslate2.dll` | C++ library — copy to `site-packages/ctranslate2/` after pip install |
+
+### `CTranslate2/` — Source tree (forked from GitHub)
+
+CTranslate2 v4.7.1 source code with 3 patches applied for ROCm 6.2 compatibility:
+
+| Patched File | What Changed |
+|--------------|-------------|
+| `src/cuda/primitives.cu` | Cast `HIP_R_*` constants to `hipblasDatatype_t` and map compute types to `hipblasDatatype_t` (ROCm 6 vs 7 API difference) |
+| `src/cuda/helpers.h` | Define `__syncwarp` as `__syncthreads()` for HIP (AMD wavefronts are lockstep) |
+| `python/ctranslate2/__init__.py` | Add ROCm 6.2 bin directory to DLL search path |
+
+Key build outputs inside this tree:
+
+| Path | What |
+|------|------|
+| `build/` | Full CMake build directory (object files, intermediates) |
+| `build/install/bin/ctranslate2.dll` | The compiled C++ library with gfx1010 GPU code |
+| `build/install/include/` | C++ headers (for linking) |
+| `build/install/lib/` | Import libraries (for linking) |
+| `python/dist/ctranslate2-4.7.1-cp313-cp313-win_amd64.whl` | The custom Python wheel — install this with pip |
+
+### `community-rocblas-gfx1010/` — Community rocBLAS
+
+Downloaded from [likelovewant/ROCmLibs](https://github.com/likelovewant/ROCmLibs-for-gfx1103-AMD780M-APU/releases/tag/v0.6.2.4) (v0.6.2.4).
+
+| Path | What |
+|------|------|
+| `rocm.gfx1010-xnack-...for.hip.sdk.6.2.4.7z` | 7z archive (~12MB) containing rocblas.dll + Tensile kernel library (~600MB extracted) |
+
+Extract with `7z x <archive>` to get `rocblas.dll` and `library/` folder. These replace the stock files in `C:\Program Files\AMD\ROCm\6.2\bin\rocblas\`. The stock rocBLAS only has kernels for gfx906/gfx1030/gfx1100+ — no gfx1010.
+
+### `docs/` — Documentation
+
+| File | What |
+|------|------|
+| `ctranslate2-rocm6-build.md` | Step-by-step record of the successful build. Every command, every patch, every workaround. |
+| `rocm-gfx1010-build-plan.md` | The full journey: gate checks, DLL shim attempt, diagnosis, and resolution. |
+| `gpu-stack-explainer.html` | Visual explainer: how the CUDA/ROCm/CTranslate2/faster-whisper stack fits together. |
+| `rocm-build-explainer.html` | Visual explainer: what ROCm components are, what gfx codes mean, why rocBLAS is the bottleneck. |
+| `ctranslate2-build-explainer.html` | Visual explainer: why the pre-built wheel fails and what building from source actually does. |
+
+## How to use the build output
+
+```
+pip install --force-reinstall dist\ctranslate2-4.7.1-cp313-cp313-win_amd64.whl
+copy dist\ctranslate2.dll → site-packages\ctranslate2\
+```
+
+The app also needs `os.add_dll_directory(r"C:\Program Files\AMD\ROCm\6.2\bin")` called before importing CTranslate2, so Windows can find the ROCm DLLs at runtime.
+
+## Environment this was built on
+
+- GPU: AMD RX 5700 XT (gfx1010, RDNA 1)
+- OS: Windows 10+
+- HIP SDK: 6.2
+- Compiler: ROCm Clang 19.0.0
+- MSVC: Build Tools 2026 (v14.50)
+- Python: 3.13.5
+- Community rocBLAS: likelovewant/ROCmLibs v0.6.2.4
