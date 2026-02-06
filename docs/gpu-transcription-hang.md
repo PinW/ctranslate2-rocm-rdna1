@@ -34,7 +34,7 @@ This is consistent with reports of "gibberish output" from other users running u
 
 ## Not yet tested
 
-- **CPU float32 with this build** — should work (no MKL needed for float32, just slow). Would confirm the build itself is correct and isolate the issue to GPU math.
+- ~~**CPU float32 with this build**~~ — TESTED: fails with `No SGEMM backend on CPU`. This build has no CPU math backend at all. To test CPU, need to reinstall the stock PyPI ctranslate2 wheel temporarily.
 - **Larger models** (base, small) — different model sizes use different GEMM shapes, might hit different Tensile kernels.
 - **beam_size=1 with real speech** in isolation — the test script hung on the first test, but the app managed to return (empty) in ~3s. Could be audio-length dependent.
 
