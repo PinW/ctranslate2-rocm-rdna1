@@ -67,9 +67,7 @@ Run in order: `configure.bat` then `build.bat` then `install_and_wheel.bat`.
 
 | File | What |
 |------|------|
-| `ctranslate2.dll` | C++ library -- copy to `site-packages/ctranslate2/` after pip install |
-
-The wheel is output to `CTranslate2/python/dist/`.
+| `ctranslate2-4.7.1+rocm62.gfx1010-cp313-cp313-win_amd64.whl` | Python wheel with bundled DLL -- just `pip install` it |
 
 ### `tests/` -- Investigation and test scripts
 
@@ -117,8 +115,7 @@ Extract with `7z x <archive>` to get `rocblas.dll` and `library/` folder. These 
 ## How to use the build output
 
 ```
-pip install CTranslate2\python\dist\ctranslate2-4.7.1+rocm62.gfx1010-cp313-cp313-win_amd64.whl --force-reinstall
-copy dist\ctranslate2.dll -> site-packages\ctranslate2\
+pip install dist\ctranslate2-4.7.1+rocm62.gfx1010-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
 ```
 
 The wheel reads the `HIP_PATH` environment variable (set by the HIP SDK installer) to locate ROCm DLLs at runtime. No manual DLL path setup needed.
