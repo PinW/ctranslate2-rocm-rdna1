@@ -1,6 +1,10 @@
 # CTranslate2 ROCm Build for RDNA 1 (gfx1010)
 
-CTranslate2 v4.7.1 built from source with ROCm 6.2 on Windows, targeting AMD RDNA 1 GPUs (gfx1010). **Fully working** on an RX 5700 XT -- GPU-accelerated Whisper transcription verified.
+CTranslate2 v4.7.1 built from source with ROCm 6.2 on Windows, targeting AMD RDNA 1 GPUs (gfx1010). **Fully working** on an RX 5700 XT -- GPU float16/float32 and multi-threaded CPU inference verified.
+
+### RDNA 1 GPUs (gfx1010)
+
+RX 5700 XT, RX 5700, RX 5600 XT, RX 5500 XT -- all use the gfx1010 architecture and should work with this build. Only tested on RX 5700 XT.
 
 ## Why this exists
 
@@ -11,15 +15,13 @@ The official CTranslate2 v4.7.1 ROCm wheel (from GitHub releases) is built for *
 - **No gfx1010 Tensile kernels in stock rocBLAS.** The HIP SDK's rocBLAS only ships matrix math kernels for officially supported architectures. RDNA 1 was never officially supported.
 - **ROCm 6 vs 7 API differences.** `hipblasDatatype_t` and `hipblasComputeType_t` changed between versions, requiring source patches to compile against ROCm 6.2.
 
-This repo contains the patched CTranslate2 source (3 files changed), build scripts, community rocBLAS with gfx1010 kernels, and the ready-to-install wheel + DLL.
+## Quick start
 
-### RDNA 1 GPUs (gfx1010)
+TODO
 
-RX 5700 XT, RX 5700, RX 5600 XT, RX 5500 XT -- all use the gfx1010 architecture and should work with this build. Only tested on RX 5700 XT.
+## Building from source
 
-## Prerequisites
-
-### HIP SDK 6.2
+### 1. HIP SDK 6.2
 
 Install **HIP SDK 6.2.x** (NOT 7.x). The Adrenalin gaming driver ships ROCm 6 runtime DLLs, so the SDK version must match. HIP SDK 7 will see zero devices on RDNA 1.
 
@@ -29,20 +31,20 @@ During installation, select the **full install** -- you need both:
 
 The installer sets `HIP_PATH` as a system environment variable. The wheel's `__init__.py` reads this to locate the ROCm DLLs at runtime.
 
-### Community rocBLAS with gfx1010 Tensile kernels
+### 2. Community rocBLAS with gfx1010 Tensile kernels
 
 The stock rocBLAS in HIP SDK 6.2 has no gfx1010 kernels. Download community-built ones from [likelovewant/ROCmLibs](https://github.com/likelovewant/ROCmLibs-for-gfx1103-AMD780M-APU/releases/tag/v0.6.2.4) (v0.6.2.4). A copy of the archive is included in `community-rocblas-gfx1010/`.
 
 Extract and replace `rocblas.dll` + `library/` in `C:\Program Files\AMD\ROCm\6.2\bin\rocblas\`.
 
-### MSVC Build Tools
+### 3. MSVC Build Tools
 
 ROCm's clang compiler on Windows delegates linking to MSVC. Install **Build Tools for Visual Studio 2022 or later** with the **"Desktop development with C++"** workload. The components needed:
 - **MSVC Build Tools for x64/x86 (Latest)** -- compiler, linker, runtime libs (`msvcrt.lib`, `oldnames.lib`)
 - **MSVC v143 (VS 2022) toolchain** -- also check this in the installer. MSVC 2026 (v14.50) STL headers use `__builtin_verbose_trap` which ROCm's Clang 19.0.0 doesn't support. The build scripts work around this, but having v143 installed is a safety net.
 - **Windows SDK** -- system headers and libs
 
-### Other tools
+### 4. Other tools
 
 | Tool | Version used | Install |
 |------|-------------|---------|
@@ -51,107 +53,55 @@ ROCm's clang compiler on Windows delegates linking to MSVC. Install **Build Tool
 | Python | 3.13 | Target runtime for the wheel |
 | pybind11 | 3.0+ | `pip install pybind11` (installed by build script) |
 
-## What this folder contains
+### 5. Build
 
-### Build Scripts (root)
+Run in order:
 
-| File | Purpose |
-|------|---------|
-| `build_onednn.bat` | Build oneDNN 3.1.1 from source (static lib, SEQ runtime). Run once before configure.bat. Output goes to `onednn-install/`. |
-| `configure.bat` | CMake configure step. Sets up MSVC + ROCm environment, then runs cmake with all the flags needed for a ROCm 6.2 / gfx1010 build. Deletes previous build dir first. |
-| `build.bat` | Compile step. Sets up environment, then runs `cmake --build` with parallel jobs. Takes 10-30 min. |
-| `install_and_wheel.bat` | Package step. Installs the built C++ library, then builds a Python `.whl` file from the `python/` subdirectory. |
+1. `build_onednn.bat` -- build oneDNN 3.1.1 static lib (run once, output goes to `onednn-install/`)
+2. `configure.bat` -- CMake configure (deletes previous build dir)
+3. `build.bat` -- compile (10-30 min)
+4. `install_and_wheel.bat` -- package into Python wheel
 
-Run in order: `build_onednn.bat` (once), then `configure.bat`, `build.bat`, `install_and_wheel.bat`.
-### `onednn-3.1.1.tar.gz` -- oneDNN source
-Source archive for [oneDNN 3.1.1](https://github.com/oneapi-src/oneDNN/releases/tag/v3.1.1) (7 MB). Built by `build_onednn.bat` into a static library that gets linked into ctranslate2.dll, providing CPU GEMM support (int8, float32). The extracted source tree (`oneDNN-3.1.1/`) and build output (`onednn-install/`) are gitignored.
-
-### `dist/` -- Build output
-
-| File | What |
-|------|------|
-| `ctranslate2-4.7.1+rocm62.gfx1010-cp313-cp313-win_amd64.whl` | Python wheel with bundled DLL -- just `pip install` it |
-
-### `tests/` -- Investigation and test scripts
-
-Test scripts (.py, .hip), compiled HIP test binaries (.exe), test model directories, and numpy reference outputs used during the GPU debugging investigation. These are not needed for normal use.
-
-### `CTranslate2/` -- Source tree (forked from GitHub)
-
-CTranslate2 v4.7.1 source code with patches applied for ROCm 6.2 compatibility:
-
-| Patched File | What Changed |
-|--------------|-------------|
-| `src/cuda/primitives.cu` | Cast `HIP_R_*` constants to `hipblasDatatype_t` and map compute types to `hipblasDatatype_t` (ROCm 6 vs 7 API difference) |
-| `src/cuda/helpers.h` | Define `__syncwarp(mask)` as no-op for HIP (AMD wavefronts are lockstep on RDNA 1; the original `__syncthreads()` mapping caused a barrier race condition in `block_reduce()` -- see fix history below) |
-| `python/ctranslate2/__init__.py` | Add `HIP_PATH` env var lookup to DLL search path for ROCm runtime DLLs |
-| `python/ctranslate2/version.py` | Version marked as `4.7.1+rocm62.gfx1010` to distinguish from upstream |
-
-Key build outputs inside this tree:
-
-| Path | What |
-|------|------|
-| `build/` | Full CMake build directory (object files, intermediates) |
-| `build/install/bin/ctranslate2.dll` | The compiled C++ library with gfx1010 GPU code |
-| `python/dist/` | The custom Python wheel (`ctranslate2-4.7.1+rocm62.gfx1010-cp313-cp313-win_amd64.whl`) |
-
-### `community-rocblas-gfx1010/` -- Community rocBLAS
-
-Downloaded from [likelovewant/ROCmLibs](https://github.com/likelovewant/ROCmLibs-for-gfx1103-AMD780M-APU/releases/tag/v0.6.2.4) (v0.6.2.4).
-
-| Path | What |
-|------|------|
-| `rocm.gfx1010-xnack-...for.hip.sdk.6.2.4.7z` | 7z archive (~12MB) containing rocblas.dll + Tensile kernel library (~600MB extracted) |
-
-Extract with `7z x <archive>` to get `rocblas.dll` and `library/` folder. These replace the stock files in `C:\Program Files\AMD\ROCm\6.2\bin\rocblas\`. The stock rocBLAS only has kernels for gfx906/gfx1030/gfx1100+ -- no gfx1010.
-
-### `docs/` -- Documentation
-
-| File | What |
-|------|------|
-| `ctranslate2-rocm6-build.md` | Step-by-step record of the successful build. Every command, every patch, every workaround. |
-| `rocm-gfx1010-build-plan.md` | The full journey: gate checks, DLL shim attempt, diagnosis, and resolution. |
-| `gpu-stack-explainer.html` | Visual explainer: how the CUDA/ROCm/CTranslate2/faster-whisper stack fits together. |
-| `rocm-build-explainer.html` | Visual explainer: what ROCm components are, what gfx codes mean, why rocBLAS is the bottleneck. |
-| `ctranslate2-build-explainer.html` | Visual explainer: why the pre-built wheel fails and what building from source actually does. |
-
-## How to use the build output
-
+Install the wheel:
 ```
-pip install dist\ctranslate2-4.7.1+rocm62.gfx1010-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
+pip install CTranslate2\python\dist\ctranslate2-4.7.1+rocm62.gfx1010-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
 ```
 
 The wheel reads the `HIP_PATH` environment variable (set by the HIP SDK installer) to locate ROCm DLLs at runtime. No manual DLL path setup needed.
 
-## Known limitations
+## What's in this repo
 
-- **CPU inference is single-threaded.** oneDNN 3.1.1 is included for CPU GEMM (int8, int8_float32, float32 all work), but OpenMP is not enabled (`OPENMP_RUNTIME=NONE`). CPU inference works correctly but uses one core. The stock PyPI wheel uses Intel OpenMP for multi-threaded CPU; adding this is a future improvement.
-- **float16 fails with `cuBLAS UNKNOWN` error.** Only `float32` works on GPU. Likely a Tensile kernel coverage gap for float16 GEMM shapes on gfx1010. TODO: investigate if community rocBLAS has float16 kernels or if this is a hardware limitation.
-- **Process hangs on shutdown in GPU mode.** After `Ctrl+C`, the app prints "Goodbye" but hangs indefinitely. The process must be killed manually. The HIP runtime or rocBLAS may not be releasing GPU resources cleanly. Does not happen in CPU mode.
+### `CTranslate2/` -- Patched source tree
 
-## Fix history
+CTranslate2 v4.7.1 with 4 files patched for ROCm 6.2 / gfx1010:
 
-### 2026-02-07: Fixed `__syncwarp` mapping -- GPU transcription now working
+| Patched File | What Changed |
+|--------------|-------------|
+| `src/cuda/primitives.cu` | Use hipBLAS v2 API (`hipblasGemmEx_v2`) with `hipblasComputeType_t` and `hipDataType` for correct float16/float32 GEMM dispatch |
+| `src/cuda/helpers.h` | `__syncwarp(mask)` defined as no-op (RDNA 1 wavefronts are lockstep; mapping to `__syncthreads()` causes a barrier race in `block_reduce()` since the GPU's `s_barrier` counts all wavefront arrivals regardless of code location) |
+| `python/ctranslate2/__init__.py` | Add `HIP_PATH` env var lookup to DLL search path for ROCm runtime DLLs |
+| `python/ctranslate2/version.py` | Version marked as `4.7.1+rocm62.gfx1010` to distinguish from upstream |
 
-The original HIP compatibility patch mapped `__syncwarp(mask)` to `__syncthreads()`. This caused a **barrier synchronization race condition** in `block_reduce()` (used by softmax):
+Build outputs: `build/install/bin/ctranslate2.dll` (compiled library), `python/dist/*.whl` (Python wheel)
 
-- GPU's `s_barrier` is a shared counting barrier that doesn't distinguish between different code locations
-- In `block_reduce()` with blockDim=512 (16 warps), 16 threads called `__syncthreads()` at the `__syncwarp` site while 496 threads called `__syncthreads()` at the next barrier
-- The hardware counted all 512 arrivals and released everyone -- before the first-warp threads had written reduced values to shared memory
-- This corrupted softmax's max and sum reductions, producing garbage attention weights
-- Encoder output had zero correlation with CPU reference; decoder looped forever
+### `community-rocblas-gfx1010/` -- Community rocBLAS
 
-**Fix:** Changed `#define __syncwarp(mask) __syncthreads()` to `#define __syncwarp(mask)` (no-op). On gfx1010/RDNA 1, waves execute in lockstep, so warp-level synchronization is inherently satisfied.
+7z archive from [likelovewant/ROCmLibs](https://github.com/likelovewant/ROCmLibs-for-gfx1103-AMD780M-APU/releases/tag/v0.6.2.4) (v0.6.2.4) containing `rocblas.dll` + Tensile kernel library for gfx1010. Replaces the stock files in `C:\Program Files\AMD\ROCm\6.2\bin\rocblas\`.
 
-**Result:** Encoder correlation 1.000000 vs CPU reference. Full Whisper transcription verified working.
+### `onednn-3.1.1.tar.gz` -- oneDNN source
 
-## Environment this was built on
+Source archive for [oneDNN 3.1.1](https://github.com/oneapi-src/oneDNN/releases/tag/v3.1.1). Built into a static library linked into ctranslate2.dll, providing multi-threaded CPU GEMM support (int8, float32) via Intel OpenMP.
+
+### `tests/` -- Debug scripts
+
+Test scripts (.py, .hip) from GPU debugging investigation. Not needed for normal use.
+
+## Tested with
 
 - GPU: AMD RX 5700 XT (gfx1010, RDNA 1)
-- OS: Windows 10+
+- OS: Windows 11
 - HIP SDK: 6.2
 - Compiler: ROCm Clang 19.0.0
 - MSVC: Build Tools 2026 (v14.50)
 - Python: 3.13.5
 - Community rocBLAS: likelovewant/ROCmLibs v0.6.2.4
-

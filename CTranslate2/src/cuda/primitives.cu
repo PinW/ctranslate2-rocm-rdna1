@@ -11,19 +11,19 @@
 #define cublasSgemm hipblasSgemm
 #define CUBLAS_OP_T HIPBLAS_OP_T
 #define CUBLAS_OP_N HIPBLAS_OP_N
-#define cublasComputeType_t hipblasDatatype_t
-#define CUBLAS_COMPUTE_16F (hipblasDatatype_t)HIPBLAS_R_16F
-#define CUBLAS_COMPUTE_32F (hipblasDatatype_t)HIPBLAS_R_32F
-#define CUBLAS_COMPUTE_32I (hipblasDatatype_t)HIPBLAS_R_32I
-#define CUDA_R_16F (hipblasDatatype_t)HIP_R_16F
-#define CUDA_R_16BF (hipblasDatatype_t)HIP_R_16BF
-#define CUDA_R_32F (hipblasDatatype_t)HIP_R_32F
-#define CUDA_R_8I (hipblasDatatype_t)HIP_R_8I
-#define CUDA_R_32I (hipblasDatatype_t)HIP_R_32I
+#define cublasComputeType_t hipblasComputeType_t
+#define CUBLAS_COMPUTE_16F HIPBLAS_COMPUTE_16F
+#define CUBLAS_COMPUTE_32F HIPBLAS_COMPUTE_32F
+#define CUBLAS_COMPUTE_32I HIPBLAS_COMPUTE_32I
+#define CUDA_R_16F HIP_R_16F
+#define CUDA_R_16BF HIP_R_16BF
+#define CUDA_R_32F HIP_R_32F
+#define CUDA_R_8I HIP_R_8I
+#define CUDA_R_32I HIP_R_32I
 #define CUBLAS_GEMM_DEFAULT HIPBLAS_GEMM_DEFAULT
 #define cublasSgemmStridedBatched hipblasSgemmStridedBatched
-#define cublasGemmEx hipblasGemmEx
-#define cublasGemmStridedBatchedEx hipblasGemmStridedBatchedEx
+#define cublasGemmEx hipblasGemmEx_v2
+#define cublasGemmStridedBatchedEx hipblasGemmStridedBatchedEx_v2
 #else
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
