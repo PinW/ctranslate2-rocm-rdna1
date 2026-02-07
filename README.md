@@ -1,19 +1,8 @@
 # CTranslate2 ROCm Build for RDNA 1 (gfx1010)
 
-CTranslate2 v4.7.1 built from source with ROCm 6.2 on Windows, targeting AMD RDNA 1 GPUs (gfx1010). **Fully working** on an RX 5700 XT -- GPU float16/float32 and multi-threaded CPU inference verified.
+CTranslate2 v4.7.1 built from source with ROCm 6.2 on Windows, targeting AMD RDNA 1 GPUs (RX 5700 XT, RX 5700, RX 5600 XT, RX 5500 XT). GPU float16/float32 and multi-threaded CPU inference verified on RX 5700 XT.
 
-### RDNA 1 GPUs (gfx1010)
-
-RX 5700 XT, RX 5700, RX 5600 XT, RX 5500 XT -- all use the gfx1010 architecture and should work with this build. Only tested on RX 5700 XT.
-
-## Why this exists
-
-The official CTranslate2 v4.7.1 ROCm wheel (from GitHub releases) is built for **ROCm 7.1.1** targeting **gfx1030+** (RDNA 2 and newer). It doesn't work on RDNA 1 for multiple reasons:
-
-- **RDNA 1 (RX 5000 series) is not detected by ROCm 7.** The Adrenalin gaming driver ships ROCm 6 runtime DLLs. HIP SDK 7 returns zero devices; only **HIP SDK 6.2** recognizes RDNA 1 hardware.
-- **No gfx1010 GPU code in the wheel.** The pre-built binary contains GPU kernels for gfx1030/gfx1100+ only. Code compiled for one GPU architecture cannot run on another.
-- **No gfx1010 Tensile kernels in stock rocBLAS.** The HIP SDK's rocBLAS only ships matrix math kernels for officially supported architectures. RDNA 1 was never officially supported.
-- **ROCm 6 vs 7 API differences.** `hipblasDatatype_t` and `hipblasComputeType_t` changed between versions, requiring source patches to compile against ROCm 6.2.
+The official CTranslate2 ROCm wheel targets ROCm 7 / gfx1030+ (RDNA 2+). RDNA 1 needs ROCm 6.2, community rocBLAS kernels, and source patches to work.
 
 ## Quick start
 
