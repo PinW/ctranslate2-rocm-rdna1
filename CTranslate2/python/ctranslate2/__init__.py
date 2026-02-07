@@ -17,6 +17,15 @@ if sys.platform == "win32":
     except (FileNotFoundError, OSError):
         pass
 
+    hip_path = os.environ.get("HIP_PATH")
+    if hip_path:
+        hip_bin = os.path.join(hip_path, "bin")
+        try:
+            if os.path.isdir(hip_bin):
+                os.add_dll_directory(hip_bin)
+        except (FileNotFoundError, OSError):
+            pass
+
     for library in glob.glob(os.path.join(package_dir, "*.dll")):
         ctypes.CDLL(library)
 
