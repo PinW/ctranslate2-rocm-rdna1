@@ -6,3 +6,13 @@ CTranslate2/python/*.egg-info/
 
 # CTranslate2 submodules (fetched by git clone --recurse-submodules)
 CTranslate2/third_party/
+
+# Test artifacts (binary data, compiled executables, model dirs)
+*.npy
+*.exe
+tests/model_*/
+tests/truncated_*/
+tests/zero_layer_model/
+
+# Temp directories
+temp_wheels/
