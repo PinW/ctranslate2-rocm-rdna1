@@ -27,6 +27,8 @@ During installation, select the **full install** -- you need both:
 - **HIP Runtime** -- `amdhip64.dll`, device management, kernel launch
 - **HIP Runtime Compiler** -- includes `amd_comgr.dll` (Code Object Manager), required for GPU initialization. Without it you get a misleading "no ROCm-capable device" error even though the GPU is present.
 
+The installer sets `HIP_PATH` as a system environment variable. The wheel's `__init__.py` reads this to locate the ROCm DLLs at runtime.
+
 ### Community rocBLAS with gfx1010 Tensile kernels
 
 The stock rocBLAS in HIP SDK 6.2 has no gfx1010 kernels. Download community-built ones from [likelovewant/ROCmLibs](https://github.com/likelovewant/ROCmLibs-for-gfx1103-AMD780M-APU/releases/tag/v0.6.2.4) (v0.6.2.4). A copy of the archive is included in `community-rocblas-gfx1010/`.
@@ -61,22 +63,28 @@ ROCm's clang compiler on Windows delegates linking to MSVC. Install **Build Tool
 
 Run in order: `configure.bat` then `build.bat` then `install_and_wheel.bat`.
 
-### `dist/` -- Build output (ready to install)
+### `dist/` -- Build output
 
 | File | What |
 |------|------|
-| `ctranslate2-4.7.1-cp313-cp313-win_amd64.whl` | Python wheel -- `pip install --force-reinstall <this>` |
 | `ctranslate2.dll` | C++ library -- copy to `site-packages/ctranslate2/` after pip install |
+
+The wheel is output to `CTranslate2/python/dist/`.
+
+### `tests/` -- Investigation and test scripts
+
+Test scripts (.py, .hip), compiled HIP test binaries (.exe), test model directories, and numpy reference outputs used during the GPU debugging investigation. These are not needed for normal use.
 
 ### `CTranslate2/` -- Source tree (forked from GitHub)
 
-CTranslate2 v4.7.1 source code with 3 patches applied for ROCm 6.2 compatibility:
+CTranslate2 v4.7.1 source code with patches applied for ROCm 6.2 compatibility:
 
 | Patched File | What Changed |
 |--------------|-------------|
 | `src/cuda/primitives.cu` | Cast `HIP_R_*` constants to `hipblasDatatype_t` and map compute types to `hipblasDatatype_t` (ROCm 6 vs 7 API difference) |
 | `src/cuda/helpers.h` | Define `__syncwarp(mask)` as no-op for HIP (AMD wavefronts are lockstep on RDNA 1; the original `__syncthreads()` mapping caused a barrier race condition in `block_reduce()` -- see fix history below) |
-| `python/ctranslate2/__init__.py` | Add ROCm 6.2 bin directory to DLL search path |
+| `python/ctranslate2/__init__.py` | Add `HIP_PATH` env var lookup to DLL search path for ROCm runtime DLLs |
+| `python/ctranslate2/version.py` | Version marked as `4.7.1+rocm62.gfx1010` to distinguish from upstream |
 
 Key build outputs inside this tree:
 
@@ -84,9 +92,7 @@ Key build outputs inside this tree:
 |------|------|
 | `build/` | Full CMake build directory (object files, intermediates) |
 | `build/install/bin/ctranslate2.dll` | The compiled C++ library with gfx1010 GPU code |
-| `build/install/include/` | C++ headers (for linking) |
-| `build/install/lib/` | Import libraries (for linking) |
-| `python/dist/ctranslate2-4.7.1-cp313-cp313-win_amd64.whl` | The custom Python wheel -- install this with pip |
+| `python/dist/` | The custom Python wheel (`ctranslate2-4.7.1+rocm62.gfx1010-cp313-cp313-win_amd64.whl`) |
 
 ### `community-rocblas-gfx1010/` -- Community rocBLAS
 
@@ -111,11 +117,11 @@ Extract with `7z x <archive>` to get `rocblas.dll` and `library/` folder. These 
 ## How to use the build output
 
 ```
-pip install --force-reinstall dist\ctranslate2-4.7.1-cp313-cp313-win_amd64.whl
+pip install CTranslate2\python\dist\ctranslate2-4.7.1+rocm62.gfx1010-cp313-cp313-win_amd64.whl --force-reinstall
 copy dist\ctranslate2.dll -> site-packages\ctranslate2\
 ```
 
-The app also needs `os.add_dll_directory(r"C:\Program Files\AMD\ROCm\6.2\bin")` called before importing CTranslate2, so Windows can find the ROCm DLLs at runtime.
+The wheel reads the `HIP_PATH` environment variable (set by the HIP SDK installer) to locate ROCm DLLs at runtime. No manual DLL path setup needed.
 
 ## Known limitations
 
