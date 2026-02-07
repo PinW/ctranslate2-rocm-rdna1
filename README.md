@@ -1,6 +1,6 @@
 # CTranslate2 ROCm Build for RDNA 1 (gfx1010)
 
-CTranslate2 v4.7.1 built from source with ROCm 6.2 on Windows, targeting AMD RDNA 1 GPUs (gfx1010). Tested and verified working on an RX 5700 XT.
+CTranslate2 v4.7.1 built from source with ROCm 6.2 on Windows, targeting AMD RDNA 1 GPUs (gfx1010). **Fully working** on an RX 5700 XT -- GPU-accelerated Whisper transcription verified.
 
 ## Why this exists
 
@@ -15,7 +15,7 @@ This repo contains the patched CTranslate2 source (3 files changed), build scrip
 
 ### RDNA 1 GPUs (gfx1010)
 
-RX 5700 XT, RX 5700, RX 5600 XT, RX 5500 XT — all use the gfx1010 architecture and should work with this build. Only tested on RX 5700 XT.
+RX 5700 XT, RX 5700, RX 5600 XT, RX 5500 XT -- all use the gfx1010 architecture and should work with this build. Only tested on RX 5700 XT.
 
 ## Prerequisites
 
@@ -23,9 +23,9 @@ RX 5700 XT, RX 5700, RX 5600 XT, RX 5500 XT — all use the gfx1010 architecture
 
 Install **HIP SDK 6.2.x** (NOT 7.x). The Adrenalin gaming driver ships ROCm 6 runtime DLLs, so the SDK version must match. HIP SDK 7 will see zero devices on RDNA 1.
 
-During installation, select the **full install** — you need both:
-- **HIP Runtime** — `amdhip64.dll`, device management, kernel launch
-- **HIP Runtime Compiler** — includes `amd_comgr.dll` (Code Object Manager), required for GPU initialization. Without it you get a misleading "no ROCm-capable device" error even though the GPU is present.
+During installation, select the **full install** -- you need both:
+- **HIP Runtime** -- `amdhip64.dll`, device management, kernel launch
+- **HIP Runtime Compiler** -- includes `amd_comgr.dll` (Code Object Manager), required for GPU initialization. Without it you get a misleading "no ROCm-capable device" error even though the GPU is present.
 
 ### Community rocBLAS with gfx1010 Tensile kernels
 
@@ -36,9 +36,9 @@ Extract and replace `rocblas.dll` + `library/` in `C:\Program Files\AMD\ROCm\6.2
 ### MSVC Build Tools
 
 ROCm's clang compiler on Windows delegates linking to MSVC. Install **Build Tools for Visual Studio 2022 or later** with the **"Desktop development with C++"** workload. The components needed:
-- **MSVC Build Tools for x64/x86 (Latest)** — compiler, linker, runtime libs (`msvcrt.lib`, `oldnames.lib`)
-- **MSVC v143 (VS 2022) toolchain** — also check this in the installer. MSVC 2026 (v14.50) STL headers use `__builtin_verbose_trap` which ROCm's Clang 19.0.0 doesn't support. The build scripts work around this, but having v143 installed is a safety net.
-- **Windows SDK** — system headers and libs
+- **MSVC Build Tools for x64/x86 (Latest)** -- compiler, linker, runtime libs (`msvcrt.lib`, `oldnames.lib`)
+- **MSVC v143 (VS 2022) toolchain** -- also check this in the installer. MSVC 2026 (v14.50) STL headers use `__builtin_verbose_trap` which ROCm's Clang 19.0.0 doesn't support. The build scripts work around this, but having v143 installed is a safety net.
+- **Windows SDK** -- system headers and libs
 
 ### Other tools
 
@@ -61,21 +61,21 @@ ROCm's clang compiler on Windows delegates linking to MSVC. Install **Build Tool
 
 Run in order: `configure.bat` then `build.bat` then `install_and_wheel.bat`.
 
-### `dist/` — Build output (ready to install)
+### `dist/` -- Build output (ready to install)
 
 | File | What |
 |------|------|
-| `ctranslate2-4.7.1-cp313-cp313-win_amd64.whl` | Python wheel — `pip install --force-reinstall <this>` |
-| `ctranslate2.dll` | C++ library — copy to `site-packages/ctranslate2/` after pip install |
+| `ctranslate2-4.7.1-cp313-cp313-win_amd64.whl` | Python wheel -- `pip install --force-reinstall <this>` |
+| `ctranslate2.dll` | C++ library -- copy to `site-packages/ctranslate2/` after pip install |
 
-### `CTranslate2/` — Source tree (forked from GitHub)
+### `CTranslate2/` -- Source tree (forked from GitHub)
 
 CTranslate2 v4.7.1 source code with 3 patches applied for ROCm 6.2 compatibility:
 
 | Patched File | What Changed |
 |--------------|-------------|
 | `src/cuda/primitives.cu` | Cast `HIP_R_*` constants to `hipblasDatatype_t` and map compute types to `hipblasDatatype_t` (ROCm 6 vs 7 API difference) |
-| `src/cuda/helpers.h` | Define `__syncwarp` as `__syncthreads()` for HIP (AMD wavefronts are lockstep) |
+| `src/cuda/helpers.h` | Define `__syncwarp(mask)` as no-op for HIP (AMD wavefronts are lockstep on RDNA 1; the original `__syncthreads()` mapping caused a barrier race condition in `block_reduce()` -- see fix history below) |
 | `python/ctranslate2/__init__.py` | Add ROCm 6.2 bin directory to DLL search path |
 
 Key build outputs inside this tree:
@@ -86,9 +86,9 @@ Key build outputs inside this tree:
 | `build/install/bin/ctranslate2.dll` | The compiled C++ library with gfx1010 GPU code |
 | `build/install/include/` | C++ headers (for linking) |
 | `build/install/lib/` | Import libraries (for linking) |
-| `python/dist/ctranslate2-4.7.1-cp313-cp313-win_amd64.whl` | The custom Python wheel — install this with pip |
+| `python/dist/ctranslate2-4.7.1-cp313-cp313-win_amd64.whl` | The custom Python wheel -- install this with pip |
 
-### `community-rocblas-gfx1010/` — Community rocBLAS
+### `community-rocblas-gfx1010/` -- Community rocBLAS
 
 Downloaded from [likelovewant/ROCmLibs](https://github.com/likelovewant/ROCmLibs-for-gfx1103-AMD780M-APU/releases/tag/v0.6.2.4) (v0.6.2.4).
 
@@ -96,9 +96,9 @@ Downloaded from [likelovewant/ROCmLibs](https://github.com/likelovewant/ROCmLibs
 |------|------|
 | `rocm.gfx1010-xnack-...for.hip.sdk.6.2.4.7z` | 7z archive (~12MB) containing rocblas.dll + Tensile kernel library (~600MB extracted) |
 
-Extract with `7z x <archive>` to get `rocblas.dll` and `library/` folder. These replace the stock files in `C:\Program Files\AMD\ROCm\6.2\bin\rocblas\`. The stock rocBLAS only has kernels for gfx906/gfx1030/gfx1100+ — no gfx1010.
+Extract with `7z x <archive>` to get `rocblas.dll` and `library/` folder. These replace the stock files in `C:\Program Files\AMD\ROCm\6.2\bin\rocblas\`. The stock rocBLAS only has kernels for gfx906/gfx1030/gfx1100+ -- no gfx1010.
 
-### `docs/` — Documentation
+### `docs/` -- Documentation
 
 | File | What |
 |------|------|
@@ -112,17 +112,32 @@ Extract with `7z x <archive>` to get `rocblas.dll` and `library/` folder. These 
 
 ```
 pip install --force-reinstall dist\ctranslate2-4.7.1-cp313-cp313-win_amd64.whl
-copy dist\ctranslate2.dll → site-packages\ctranslate2\
+copy dist\ctranslate2.dll -> site-packages\ctranslate2\
 ```
 
 The app also needs `os.add_dll_directory(r"C:\Program Files\AMD\ROCm\6.2\bin")` called before importing CTranslate2, so Windows can find the ROCm DLLs at runtime.
 
 ## Known limitations
 
-- **No CPU support at all.** This build skipped Intel MKL/oneDNN (`WITH_MKL=OFF`, `WITH_DNNL=OFF`) and OpenMP (`OPENMP_RUNTIME=NONE`). CPU inference fails for every compute type — int8 needs a quantized backend, and even float32 fails with `No SGEMM backend on CPU`. This build is GPU-only.
+- **No CPU support at all.** This build skipped Intel MKL/oneDNN (`WITH_MKL=OFF`, `WITH_DNNL=OFF`) and OpenMP (`OPENMP_RUNTIME=NONE`). CPU inference fails for every compute type -- int8 needs a quantized backend, and even float32 fails with `No SGEMM backend on CPU`. This build is GPU-only.
 - **float16 fails with `cuBLAS UNKNOWN` error.** Only `float32` works on GPU. Likely a Tensile kernel coverage gap for float16 GEMM shapes on gfx1010. TODO: investigate if community rocBLAS has float16 kernels or if this is a hardware limitation.
-- **Empty transcriptions on GPU.** Model loads and runs without errors but returns empty text. Works with `beam_size=1, language="en"` (test script) but fails with `beam_size=5, language=auto` (app defaults). Under investigation — likely a precision issue with beam search on fallback Tensile kernels.
 - **Process hangs on shutdown in GPU mode.** After `Ctrl+C`, the app prints "Goodbye" but hangs indefinitely. The process must be killed manually. The HIP runtime or rocBLAS may not be releasing GPU resources cleanly. Does not happen in CPU mode.
+
+## Fix history
+
+### 2026-02-07: Fixed `__syncwarp` mapping -- GPU transcription now working
+
+The original HIP compatibility patch mapped `__syncwarp(mask)` to `__syncthreads()`. This caused a **barrier synchronization race condition** in `block_reduce()` (used by softmax):
+
+- GPU's `s_barrier` is a shared counting barrier that doesn't distinguish between different code locations
+- In `block_reduce()` with blockDim=512 (16 warps), 16 threads called `__syncthreads()` at the `__syncwarp` site while 496 threads called `__syncthreads()` at the next barrier
+- The hardware counted all 512 arrivals and released everyone -- before the first-warp threads had written reduced values to shared memory
+- This corrupted softmax's max and sum reductions, producing garbage attention weights
+- Encoder output had zero correlation with CPU reference; decoder looped forever
+
+**Fix:** Changed `#define __syncwarp(mask) __syncthreads()` to `#define __syncwarp(mask)` (no-op). On gfx1010/RDNA 1, waves execute in lockstep, so warp-level synchronization is inherently satisfied.
+
+**Result:** Encoder correlation 1.000000 vs CPU reference. Full Whisper transcription verified working.
 
 ## Environment this was built on
 

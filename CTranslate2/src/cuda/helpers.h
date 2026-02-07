@@ -9,7 +9,7 @@
 #include <hip/hip_fp8.h>
 #include <thrust/iterator/counting_iterator.h>
 #define __nv_bfloat16 __hip_bfloat16
-#define __syncwarp(mask) __syncthreads()
+#define __syncwarp(mask)
 #else
 #include <cuda_fp16.h>
 #include <cuda_bf16.h>
