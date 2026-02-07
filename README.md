@@ -1,4 +1,4 @@
-# CTranslate2 ROCm Build for RDNA 1 (gfx1010)
+# [CTranslate2](https://github.com/OpenNMT/CTranslate2) Custom ROCm Build for RDNA 1 (gfx1010)
 
 CTranslate2 v4.7.1 built from source with ROCm 6.2 on Windows, targeting AMD RDNA 1 GPUs (RX 5700 XT, RX 5700, RX 5600 XT, RX 5500 XT). GPU float16/float32 and multi-threaded CPU inference verified on RX 5700 XT.
 
