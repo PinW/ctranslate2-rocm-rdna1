@@ -16,3 +16,7 @@ tests/zero_layer_model/
 
 # Temp directories
 temp_wheels/
+
+# oneDNN build artifacts (regeneratable via build_onednn.bat)
+oneDNN-3.1.1/
+onednn-install/

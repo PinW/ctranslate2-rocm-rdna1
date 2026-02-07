@@ -57,11 +57,14 @@ ROCm's clang compiler on Windows delegates linking to MSVC. Install **Build Tool
 
 | File | Purpose |
 |------|---------|
+| `build_onednn.bat` | Build oneDNN 3.1.1 from source (static lib, SEQ runtime). Run once before configure.bat. Output goes to `onednn-install/`. |
 | `configure.bat` | CMake configure step. Sets up MSVC + ROCm environment, then runs cmake with all the flags needed for a ROCm 6.2 / gfx1010 build. Deletes previous build dir first. |
 | `build.bat` | Compile step. Sets up environment, then runs `cmake --build` with parallel jobs. Takes 10-30 min. |
 | `install_and_wheel.bat` | Package step. Installs the built C++ library, then builds a Python `.whl` file from the `python/` subdirectory. |
 
-Run in order: `configure.bat` then `build.bat` then `install_and_wheel.bat`.
+Run in order: `build_onednn.bat` (once), then `configure.bat`, `build.bat`, `install_and_wheel.bat`.
+### `onednn-3.1.1.tar.gz` -- oneDNN source
+Source archive for [oneDNN 3.1.1](https://github.com/oneapi-src/oneDNN/releases/tag/v3.1.1) (7 MB). Built by `build_onednn.bat` into a static library that gets linked into ctranslate2.dll, providing CPU GEMM support (int8, float32). The extracted source tree (`oneDNN-3.1.1/`) and build output (`onednn-install/`) are gitignored.
 
 ### `dist/` -- Build output
 
@@ -122,7 +125,7 @@ The wheel reads the `HIP_PATH` environment variable (set by the HIP SDK installe
 
 ## Known limitations
 
-- **No CPU support at all.** This build skipped Intel MKL/oneDNN (`WITH_MKL=OFF`, `WITH_DNNL=OFF`) and OpenMP (`OPENMP_RUNTIME=NONE`). CPU inference fails for every compute type -- int8 needs a quantized backend, and even float32 fails with `No SGEMM backend on CPU`. This build is GPU-only.
+- **CPU inference is single-threaded.** oneDNN 3.1.1 is included for CPU GEMM (int8, int8_float32, float32 all work), but OpenMP is not enabled (`OPENMP_RUNTIME=NONE`). CPU inference works correctly but uses one core. The stock PyPI wheel uses Intel OpenMP for multi-threaded CPU; adding this is a future improvement.
 - **float16 fails with `cuBLAS UNKNOWN` error.** Only `float32` works on GPU. Likely a Tensile kernel coverage gap for float16 GEMM shapes on gfx1010. TODO: investigate if community rocBLAS has float16 kernels or if this is a hardware limitation.
 - **Process hangs on shutdown in GPU mode.** After `Ctrl+C`, the app prints "Goodbye" but hangs indefinitely. The process must be killed manually. The HIP runtime or rocBLAS may not be releasing GPU resources cleanly. Does not happen in CPU mode.
 
@@ -151,3 +154,4 @@ The original HIP compatibility patch mapped `__syncwarp(mask)` to `__syncthreads
 - MSVC: Build Tools 2026 (v14.50)
 - Python: 3.13.5
 - Community rocBLAS: likelovewant/ROCmLibs v0.6.2.4
+
