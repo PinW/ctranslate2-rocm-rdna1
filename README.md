@@ -17,7 +17,12 @@ The official CTranslate2 v4.7.1 ROCm wheel (from GitHub releases) is built for *
 
 ## Quick start
 
-TODO
+1. Install [HIP SDK 6.2](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html) (full install)
+2. Replace stock rocBLAS with [community gfx1010 build](https://github.com/likelovewant/ROCmLibs-for-gfx1103-AMD780M-APU/releases/tag/v0.6.2.4) (see [instructions](#2-community-rocblas-with-gfx1010-tensile-kernels))
+3. Install the wheel from [releases](https://github.com/PinW/ctranslate2-rocm-rdna1/releases/latest):
+```
+pip install ctranslate2-4.7.1+rocm62.gfx1010-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
+```
 
 ## Building from source
 
