@@ -11,6 +11,9 @@ cd /d %~dp0CTranslate2
 REM Install the built C++ library
 cmake --install build --prefix build/install
 
+REM Copy DLL into Python package so it gets included in the wheel
+copy build\install\bin\ctranslate2.dll python\ctranslate2\ctranslate2.dll
+
 REM Build the Python wheel
 set CTRANSLATE2_ROOT=%~dp0CTranslate2\build\install
 cd python
